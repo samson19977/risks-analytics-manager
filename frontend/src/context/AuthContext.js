@@ -1,0 +1,45 @@
+'use client'
+import { createContext, useContext, useState, useEffect } from 'react'
+import Cookies from 'js-cookie'
+import { api } from '@/lib/api'
+
+const AuthContext = createContext(null)
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = Cookies.get('token') || localStorage.getItem('token')
+    if (token) {
+      api.get('/api/auth/me').then(r => setUser(r.data)).catch(() => {
+        Cookies.remove('token'); localStorage.removeItem('token')
+      }).finally(() => setLoading(false))
+    } else {
+      setLoading(false)
+    }
+  }, [])
+
+  const login = async (email, password) => {
+    const r = await api.post('/api/auth/login', { email, password })
+    const { access_token, user: u } = r.data
+    Cookies.set('token', access_token, { expires: 1 })
+    localStorage.setItem('token', access_token)
+    setUser(u)
+    return u
+  }
+
+  const logout = () => {
+    Cookies.remove('token')
+    localStorage.removeItem('token')
+    setUser(null)
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export const useAuth = () => useContext(AuthContext)
