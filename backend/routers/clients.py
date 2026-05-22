@@ -14,14 +14,15 @@ async def list_clients(
     token_data: dict = Depends(verify_token)
 ):
     db = get_supabase()
-    q = db.table("clients").select("*,branches(name,province)").eq("is_active", True)
+    # Select clients - do not filter by is_active so seed data without that field still shows
+    q = db.table("clients").select("*,branches(name,province)")
     if risk_category:
         q = q.eq("risk_category", risk_category)
     if branch_id:
         q = q.eq("branch_id", branch_id)
     if search:
         q = q.ilike("full_name", f"%{search}%")
-    
+
     offset = (page - 1) * limit
     result = q.range(offset, offset + limit - 1).execute()
     return result.data
@@ -29,7 +30,7 @@ async def list_clients(
 @router.get("/high-risk")
 async def high_risk_clients(limit: int = 20, token_data: dict = Depends(verify_token)):
     db = get_supabase()
-    clients = db.table("clients").select("*,branches(name)").in_("risk_category", ["high", "critical"]).eq("is_active", True).order("risk_score", desc=True).limit(limit).execute()
+    clients = db.table("clients").select("*,branches(name)").in_("risk_category", ["high", "critical"]).order("risk_score", desc=True).limit(limit).execute()
     return clients.data
 
 @router.get("/{client_id}")

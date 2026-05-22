@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, portfolio, clients, branches, alerts, analytics, ai_insights, stress_test, fraud, reports
+from routers import import as import_router
 
 app = FastAPI(
     title="AB Rwanda Risk Analytics Platform",
@@ -26,13 +27,14 @@ app.include_router(ai_insights.router, prefix="/api/ai", tags=["AI Insights"])
 app.include_router(stress_test.router, prefix="/api/stress-test", tags=["Stress Testing"])
 app.include_router(fraud.router, prefix="/api/fraud", tags=["Fraud Detection"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
+app.include_router(import_router.router, prefix="/api/import", tags=["Data Import"])
 
 @app.get("/")
 async def root():
     return {
         "platform": "AB Rwanda Risk Analytics Platform v3",
         "status": "operational",
-        "modules": ["Portfolio Risk", "Branch Analytics", "AI Insights", "Stress Testing", "Fraud Detection", "Reports"]
+        "modules": ["Portfolio Risk", "Branch Analytics", "AI Insights", "Stress Testing", "Fraud Detection", "Reports", "Data Import"]
     }
 
 @app.get("/health")
