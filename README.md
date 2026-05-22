@@ -100,7 +100,7 @@ cd frontend
 npm install
 
 # Configure environment
-copy .env.example .env.local   # Windows
+copy .env.example .env.local   ## Windows
 # cp .env.example .env.local   # Mac/Linux
 # Edit .env.local: NEXT_PUBLIC_API_URL=http://localhost:8000
 

@@ -113,7 +113,7 @@ def seed_all():
         except Exception as e: print(f"  Batch {i}: {e}")
     print(f"  {len(clients)} clients seeded")
 
-    # Loans
+    ## Loans
     print("Seeding loans...")
     loans = []
     used_numbers = set()
