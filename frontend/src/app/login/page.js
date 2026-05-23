@@ -23,7 +23,7 @@ export default function LoginPage() {
       toast.success('Welcome back!')
       router.push('/dashboard')
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Invalid email or password.')
+      setError(err?.response?.data?.detail || err?.message || 'Invalid email or password.')
     } finally {
       setLoading(false)
     }
@@ -90,7 +90,7 @@ export default function LoginPage() {
             <AlertCircle size={13} color="#3b82f6" />
             <div>
               <p style={{ fontSize: 11, fontWeight: 600, color: '#3b82f6', marginBottom: 1 }}>Demo Account — click to fill</p>
-              <p style={{ fontSize: 10, color: 'var(--text-3)' }}>admin@abrwanda.rw · demo1234</p>
+              <p style={{ fontSize: 10, color: 'var(--text-3)' }}>admin@abrwanda.rw · demo1234 (demo mode)</p>
             </div>
           </div>
 
