@@ -1,146 +1,185 @@
-# AB Rwanda Risk Analytics Platform v3
+# AB Rwanda Risk Analytics Platform
 
-Advanced Risk Analytics & AI-Powered Decision Intelligence for AB Rwanda PLC.
+> **Live Demo:** [risks-analytics-manager.vercel.app](https://risks-analytics-manager.vercel.app)
+
+Advanced Risk Analytics & AI-Powered Decision Intelligence for AB Rwanda PLC — a microfinance institution managing loan portfolios across Rwanda.
+
+---
+
+## Screenshots
+
+| Dashboard | Risk Alerts | Fraud Detection |
+|---|---|---|
+| Portfolio KPIs, PAR trends, branch network | Auto-generated alerts from live loan data | Anomaly detection across disbursements |
+
+---
+
+## Features
+
+- 📊 **Portfolio Dashboard** — Real-time KPIs: PAR>30, NPL ratio, write-offs, active clients
+- 🏦 **Branch Analytics** — Per-branch performance, PAR rates, loan officer rankings
+- 👥 **Client Risk Profiles** — Risk scoring, high-risk client identification
+- ⚠️ **Risk Alerts** — Auto-generated from live loan data (PAR>90, NPL breaches, sector concentration)
+- 🧪 **Stress Testing** — Simulate recession, currency crisis, agricultural shock scenarios
+- 🕵️ **Fraud Detection** — Detect multiple active loans, month-end spikes, officer PAR anomalies
+- 🤖 **AI Insights** — Claude-powered portfolio analysis and recommendations
+- 📈 **Portfolio Analytics** — Sector concentration, PAR aging, repayment patterns
+
+---
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Frontend | Next.js 14 (App Router), Tailwind CSS, Recharts |
-| Backend | FastAPI (Python 3.11+) |
 | Database | Supabase (PostgreSQL) |
+| API Routes | Next.js API Routes (direct Supabase queries — no separate backend needed) |
 | AI | Anthropic Claude API |
-| Auth | JWT + bcrypt |
+| Auth | JWT (demo users built-in) |
+| Deployment | Vercel |
+
+---
 
 ## Project Structure
 
 ```
-Risks_Analytics_Manager/
-├── backend/                 # FastAPI backend
-│   ├── main.py              # App entry point
-│   ├── config.py            # Settings & Supabase client
-│   ├── schema.sql           # Database schema (run in Supabase)
-│   ├── seed.py              # Seed demo data
-│   ├── requirements.txt
-│   ├── .env.example         # → copy to .env and fill in
-│   └── routers/
-│       ├── auth.py
-│       ├── portfolio.py
-│       ├── clients.py
-│       ├── branches.py
-│       ├── alerts.py
-│       ├── analytics.py
-│       ├── ai_insights.py
-│       ├── stress_test.py
-│       ├── fraud.py
-│       └── reports.py
-│
-├── frontend/                # Next.js frontend
+risks-analytics-manager/
+├── frontend/
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── layout.js
-│   │   │   ├── page.js
-│   │   │   ├── providers.js
-│   │   │   └── globals.css
+│   │   │   ├── api/                   # Next.js API routes (Supabase-backed)
+│   │   │   │   ├── auth/              # login, me
+│   │   │   │   ├── portfolio/         # summary, sector-concentration
+│   │   │   │   ├── branches/          # list with enriched stats
+│   │   │   │   ├── clients/           # list, high-risk, [id]
+│   │   │   │   ├── alerts/            # auto-generated from loan data
+│   │   │   │   ├── analytics/         # risk-heatmap, loan-officer-performance
+│   │   │   │   ├── reports/           # executive-summary, branch-performance
+│   │   │   │   ├── fraud/             # signals, summary, scan
+│   │   │   │   ├── stress-test/       # run, predefined-scenarios, history
+│   │   │   │   └── ai/                # analyze, quick-insights, history
+│   │   │   ├── dashboard/page.js
+│   │   │   ├── branches/page.js
+│   │   │   ├── clients/page.js
+│   │   │   ├── alerts/page.js
+│   │   │   ├── analytics/page.js
+│   │   │   ├── stress-test/page.js
+│   │   │   ├── fraud/page.js
+│   │   │   ├── ai-insights/page.js
+│   │   │   └── login/page.js
 │   │   ├── components/layout/
 │   │   │   └── DashboardLayout.js
 │   │   ├── context/
 │   │   │   └── AuthContext.js
 │   │   └── lib/
-│   │       └── api.js
-│   ├── package.json
+│   │       ├── api.js                 # Axios client
+│   │       └── supabase.js            # Supabase REST helper
 │   ├── next.config.js
-│   ├── jsconfig.json
-│   ├── tailwind.config.js
-│   └── .env.example         # → copy to .env.local and fill in
-│
+│   ├── package.json
+│   └── .env.local                     # ← your credentials go here
 └── README.md
 ```
 
-## Quick Start (Local Development)
+---
 
-### 1. Supabase Setup
-1. Go to [supabase.com](https://supabase.com) → Create a new project
-2. Go to **SQL Editor** → paste and run `backend/schema.sql`
-3. Copy your **Project URL**, **anon key**, and **service_role key** from Settings → API
+## Quick Start
 
-### 2. Backend
+### 1. Clone the repo
 
 ```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # Mac/Linux
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-copy .env.example .env       # Windows
-# cp .env.example .env       # Mac/Linux
-# Edit .env with your Supabase & Anthropic keys
-
-# Seed demo data (optional but recommended)
-python seed.py
-
-# Start server
-uvicorn main:app --reload --port 8000
+git clone https://github.com/samson19977/risks-analytics-manager.git
+cd risks-analytics-manager/frontend
 ```
-Backend runs at: http://localhost:8000  
-API docs at: http://localhost:8000/docs
 
-### 3. Frontend
+### 2. Install dependencies
 
 ```bash
-cd frontend
-
-# Install dependencies
 npm install
+```
 
-# Configure environment
-copy .env.example .env.local   ## Windows
-# cp .env.example .env.local   # Mac/Linux
-# Edit .env.local: NEXT_PUBLIC_API_URL=http://localhost:8000
+### 3. Configure environment
 
-# Start dev server
+Create `frontend/.env.local`:
+
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_KEY=your_supabase_service_role_key
+SUPABASE_KEY=your_supabase_anon_key
+```
+
+### 4. Run locally
+
+```bash
 npm run dev
 ```
-Frontend runs at: http://localhost:3000
 
-### Default Login (after seeding)
-- **Email:** `admin@abrwanda.rw`
-- **Password:** `Admin@2024`
+Open [http://localhost:3000](http://localhost:3000)
 
----
+### 5. Login
 
-## Deployment
+| Email | Role |
+|---|---|
+| `admin@abrwanda.rw` | Admin |
+| `risk@abrwanda.com` | Risk Manager |
+| `analyst@abrwanda.com` | Portfolio Analyst |
+| `branch@abrwanda.com` | Branch Manager |
 
-### Option A — Railway (Recommended, free tier available)
-See DEPLOY.md for full step-by-step instructions.
-
-### Option B — Render
-See DEPLOY.md.
-
-### Option C — VPS / Ubuntu Server
-See DEPLOY.md.
+> No password needed — demo auth is built in.
 
 ---
 
-## Environment Variables
+## Deploying to Vercel
 
-### Backend `.env`
-| Variable | Description |
+### 1. Push to GitHub
+```bash
+git add .
+git commit -m "your message"
+git push origin main
+```
+
+### 2. Connect to Vercel
+1. Go to [vercel.com](https://vercel.com) → New Project → Import from GitHub
+2. Select `risks-analytics-manager`
+3. Set **Root Directory** to `frontend`
+
+### 3. Add environment variables in Vercel
+
+| Variable | Value |
 |---|---|
 | `SUPABASE_URL` | Your Supabase project URL |
-| `SUPABASE_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_KEY` | Supabase service role key |
-| `JWT_SECRET` | Random secret for JWT signing |
-| `ANTHROPIC_API_KEY` | Anthropic Claude API key |
+| `SUPABASE_KEY` | Supabase anon key |
+| `ANTHROPIC_API_KEY` | *(optional)* Anthropic Claude API key — enables AI analysis |
 
-### Frontend `.env.local`
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | URL of your deployed backend |
+### 4. Deploy
+Click **Deploy** — Vercel auto-deploys on every push to `main`.
 
+---
+
+## Environment Variables Reference
+
+| Variable | Required | Description |
+|---|---|---|
+| `SUPABASE_URL` | ✅ | Supabase project URL |
+| `SUPABASE_SERVICE_KEY` | ✅ | Service role key (server-side only) |
+| `SUPABASE_KEY` | ✅ | Anon/publishable key |
+| `ANTHROPIC_API_KEY` | ⚪ Optional | Enables Claude AI analysis. Falls back to rule-based insights if not set. |
+
+---
+
+## Architecture
+
+This project runs entirely on **Next.js + Supabase** with no separate backend server required.
+
+```
+Browser → Next.js (Vercel) → Supabase (PostgreSQL)
+                           ↘ Anthropic API (AI insights)
+```
+
+All `/api/*` routes are Next.js API route handlers that query Supabase directly via the REST API using the service key. Risk alerts and fraud signals are computed dynamically from loan and client data — no pre-seeding of alert tables required.
+
+---
+
+## License
+
+MIT © AB Rwanda Risk Platform
