@@ -1,7 +1,9 @@
 import axios from 'axios'
 import Cookies from 'js-cookie'
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// Use relative URL so requests go through Next.js (which proxies to backend)
+// Auth routes are handled by Next.js API routes directly — no backend needed
+const BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')
 
 export const api = axios.create({ baseURL: BASE })
 
@@ -17,7 +19,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401 && typeof window !== 'undefined') {
       Cookies.remove('token')
       localStorage.removeItem('token')
-      window.location.href = '/'
+      window.location.href = '/login'
     }
     return Promise.reject(err)
   }

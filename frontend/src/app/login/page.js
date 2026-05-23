@@ -2,36 +2,35 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
-import { Activity, Eye, EyeOff, AlertCircle, Lock, Mail } from 'lucide-react'
+import { Activity, ChevronRight, Shield, BarChart2, Eye, Users, GitBranch } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+const DEMO_USERS = [
+  { email: 'admin@abrwanda.rw',     full_name: 'Admin User',        role: 'admin',          icon: Shield,   color: '#7c3aed', desc: 'Full platform access' },
+  { email: 'risk@abrwanda.com',     full_name: 'Risk Manager',      role: 'risk_manager',   icon: BarChart2,color: '#2563eb', desc: 'Risk monitoring & alerts' },
+  { email: 'analyst@abrwanda.com',  full_name: 'Portfolio Analyst', role: 'analyst',        icon: BarChart2,color: '#0891b2', desc: 'Portfolio & analytics' },
+  { email: 'branch@abrwanda.com',   full_name: 'Branch Manager',    role: 'branch_manager', icon: GitBranch,color: '#059669', desc: 'Branch operations' },
+  { email: 'viewer@abrwanda.com',   full_name: 'Executive Viewer',  role: 'viewer',         icon: Eye,      color: '#d97706', desc: 'Read-only executive view' },
+]
 
 export default function LoginPage() {
   const { login } = useAuth()
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPwd, setShowPwd] = useState(false)
+  const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+  const handleSignIn = async () => {
+    if (!selected) return
     setLoading(true)
     try {
-      await login(email.trim(), password)
-      toast.success('Welcome back!')
+      await login(selected.email)
+      toast.success(`Welcome, ${selected.full_name}!`)
       router.push('/dashboard')
     } catch (err) {
-      setError(err?.response?.data?.detail || err?.message || 'Invalid email or password.')
+      toast.error('Sign in failed. Please try again.')
     } finally {
       setLoading(false)
     }
-  }
-
-  const fillDemo = () => {
-    setEmail('admin@abrwanda.rw')
-    setPassword('demo1234')
   }
 
   return (
@@ -43,13 +42,12 @@ export default function LoginPage() {
       justifyContent: 'center',
       padding: 24,
     }}>
-      {/* Background glow */}
       <div style={{
         position: 'fixed', inset: 0, pointerEvents: 'none',
         background: 'radial-gradient(ellipse 800px 600px at 50% 30%, rgba(37,99,235,0.08) 0%, transparent 70%)',
       }} />
 
-      <div style={{ width: '100%', maxWidth: 420, position: 'relative' }}>
+      <div style={{ width: '100%', maxWidth: 460, position: 'relative' }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{
@@ -71,103 +69,81 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="card" style={{ padding: 32 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Sign in to your account</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>
+            Choose your account
+          </h2>
           <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 24 }}>
-            Enter your credentials or use the demo account below.
+            Select a role to explore the platform — no password required.
           </p>
 
-          {/* Demo hint */}
-          <div
-            onClick={fillDemo}
-            style={{
-              marginBottom: 20, padding: '10px 14px',
-              background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.2)',
-              borderRadius: 8, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 8,
-              transition: 'background 0.2s',
-            }}
-          >
-            <AlertCircle size={13} color="#3b82f6" />
-            <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#3b82f6', marginBottom: 1 }}>Demo Account — click to fill</p>
-              <p style={{ fontSize: 10, color: 'var(--text-3)' }}>admin@abrwanda.rw · demo1234 (demo mode)</p>
-            </div>
+          {/* User cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+            {DEMO_USERS.map(u => {
+              const Icon = u.icon
+              const isSelected = selected?.email === u.email
+              return (
+                <div
+                  key={u.email}
+                  onClick={() => setSelected(u)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
+                    border: `1px solid ${isSelected ? u.color : 'var(--border)'}`,
+                    background: isSelected ? `${u.color}14` : 'var(--bg-3)',
+                    transition: 'all 0.15s',
+                    outline: 'none',
+                  }}
+                >
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: `${u.color}22`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Icon size={16} color={u.color} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>
+                      {u.full_name}
+                    </p>
+                    <p style={{ fontSize: 11, color: 'var(--text-3)' }}>{u.desc}</p>
+                  </div>
+                  <div style={{
+                    width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+                    border: `2px solid ${isSelected ? u.color : 'var(--border)'}`,
+                    background: isSelected ? u.color : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.15s',
+                  }}>
+                    {isSelected && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} />}
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
-          <form onSubmit={handleSubmit}>
-            {/* Email */}
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                Email
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={14} color="var(--text-3)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  style={{
-                    width: '100%', padding: '10px 12px 10px 36px',
-                    background: 'var(--bg-3)', border: '1px solid var(--border)',
-                    borderRadius: 8, color: 'var(--text)', fontSize: 13,
-                    outline: 'none', boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={14} color="var(--text-3)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
-                <input
-                  type={showPwd ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  style={{
-                    width: '100%', padding: '10px 36px 10px 36px',
-                    background: 'var(--bg-3)', border: '1px solid var(--border)',
-                    borderRadius: 8, color: 'var(--text)', fontSize: 13,
-                    outline: 'none', boxSizing: 'border-box',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPwd(!showPwd)}
-                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-                >
-                  {showPwd ? <EyeOff size={14} color="var(--text-3)" /> : <Eye size={14} color="var(--text-3)" />}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div style={{ marginBottom: 14, padding: '10px 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, fontSize: 12, color: '#ef4444', display: 'flex', gap: 6, alignItems: 'center' }}>
-                <AlertCircle size={13} /> {error}
-              </div>
+          <button
+            onClick={handleSignIn}
+            disabled={!selected || loading}
+            style={{
+              width: '100%', padding: '12px 20px',
+              background: selected
+                ? `linear-gradient(135deg, ${selected.color}, #7c3aed)`
+                : 'var(--bg-3)',
+              border: 'none', borderRadius: 8, color: selected ? 'white' : 'var(--text-3)',
+              fontSize: 13, fontWeight: 700,
+              cursor: (!selected || loading) ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1,
+              transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}
+          >
+            {loading ? 'Signing in…' : (
+              <>
+                {selected ? `Sign in as ${selected.full_name}` : 'Select an account above'}
+                {selected && !loading && <ChevronRight size={15} />}
+              </>
             )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%', padding: '11px 20px',
-                background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
-                border: 'none', borderRadius: 8, color: 'white',
-                fontSize: 13, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1, transition: 'opacity 0.2s',
-              }}
-            >
-              {loading ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
+          </button>
         </div>
       </div>
     </div>
