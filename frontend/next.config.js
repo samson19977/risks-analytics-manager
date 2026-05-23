@@ -1,23 +1,17 @@
 /** @type {import('next').NextConfig} */
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
 const nextConfig = {
   reactStrictMode: true,
   env: {
-    NEXT_PUBLIC_API_URL: '',  // empty = use relative URLs → Next.js handles routing
+    NEXT_PUBLIC_API_URL: '',
   },
-  async rewrites() {
-    return [
-      // Auth is handled by Next.js API routes (no backend needed)
-      // /api/auth/login and /api/auth/me are served by src/app/api/auth/*/route.js
-
-      // All other /api/* calls proxy to the Python backend
-      {
-        source: '/api/:path((?!auth).*)',
-        destination: `${BACKEND}/api/:path*`,
-      },
-    ]
-  },
+  // No rewrites needed — all /api/* routes are handled by Next.js API route handlers
+  // Auth:      src/app/api/auth/login & me
+  // Portfolio: src/app/api/portfolio/*
+  // Branches:  src/app/api/branches
+  // Alerts:    src/app/api/alerts/*
+  // Analytics: src/app/api/analytics/*
+  // Reports:   src/app/api/reports/*
+  // Clients:   src/app/api/clients
 }
 
 module.exports = nextConfig
