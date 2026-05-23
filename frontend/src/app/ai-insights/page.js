@@ -9,23 +9,23 @@ export default function AIInsightsPage() {
   const [question, setQuestion] = useState('')
   const [context, setContext] = useState('portfolio_review')
 
+  // Correct endpoint: /api/ai/ (not /api/ai-insights/)
   const { data: history } = useQuery({
     queryKey: ['ai-history'],
-    queryFn: () => api.get('/api/ai-insights/history').then(r => r.data),
+    queryFn: () => api.get('/api/ai/history').then(r => r.data),
   })
 
   const { data: quickInsights } = useQuery({
     queryKey: ['quick-insights'],
-    queryFn: () => api.get('/api/ai-insights/quick-insights').then(r => r.data),
+    queryFn: () => api.get('/api/ai/quick-insights').then(r => r.data),
   })
 
   const analyze = useMutation({
-    mutationFn: (payload) => api.post('/api/ai-insights/analyze', payload).then(r => r.data),
+    mutationFn: (payload) => api.post('/api/ai/analyze', payload).then(r => r.data),
   })
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!question.trim()) return
     analyze.mutate({ context, question })
   }
 
@@ -95,6 +95,26 @@ export default function AIInsightsPage() {
             </h2>
             <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.7, color: 'var(--text-2)' }}>
               {analyze.data.recommendation}
+            </div>
+          </div>
+        )}
+
+        {history && history.length > 0 && (
+          <div className="card" style={{ padding: 20 }}>
+            <h2 style={{ fontSize: 14, fontWeight: 600, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Clock size={14} color="var(--text-3)" /> Recent Analyses
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {history.map((h, i) => (
+                <div key={i} style={{ padding: 12, background: 'var(--bg-3)', borderRadius: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', textTransform: 'capitalize' }}>{h.context?.replace(/_/g, ' ')}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{h.created_at?.slice(0, 10)}</span>
+                  </div>
+                  {h.prompt_summary && <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4 }}>{h.prompt_summary}</p>}
+                  <p style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5 }}>{h.recommendation?.slice(0, 200)}…</p>
+                </div>
+              ))}
             </div>
           </div>
         )}

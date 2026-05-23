@@ -17,9 +17,10 @@ export default function AnalyticsPage() {
     queryFn: () => api.get('/api/analytics/loan-officer-performance').then(r => r.data),
   })
 
+  // Backend returns /api/portfolio/sector-concentration (not /api/analytics/)
   const { data: concentrations } = useQuery({
     queryKey: ['sector-concentration'],
-    queryFn: () => api.get('/api/analytics/sector-concentration').then(r => r.data),
+    queryFn: () => api.get('/api/portfolio/sector-concentration').then(r => r.data),
   })
 
   const isLoading = heatmapLoading && officersLoading
@@ -86,32 +87,29 @@ export default function AnalyticsPage() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              {/* Sector Concentration */}
-              {concentrations && (
-                <div className="card" style={{ padding: 20 }}>
-                  <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>Sector Concentration</h2>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {Object.entries(concentrations).slice(0, 8).map(([sector, data]) => {
-                      const pct = typeof data === 'object' ? (data.pct || data.percentage || 0) : data
-                      const amount = typeof data === 'object' ? (data.amount || 0) : 0
-                      return (
-                        <div key={sector}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <span style={{ fontSize: 12, color: 'var(--text-2)', textTransform: 'capitalize' }}>{sector}</span>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{formatPct(pct)}</span>
-                          </div>
-                          <div style={{ height: 4, background: 'var(--bg-3)', borderRadius: 2 }}>
-                            <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: 'var(--blue)', borderRadius: 2 }} />
-                          </div>
-                          {amount > 0 && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{formatRWF(amount)}</div>}
-                        </div>
-                      )
-                    })}
-                  </div>
+              {/* Sector Concentration — backend returns Array of {sector, amount, loan_count, percentage, par_rate, risk_level} */}
+              <div className="card" style={{ padding: 20 }}>
+                <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>Sector Concentration</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {(Array.isArray(concentrations) ? concentrations : []).slice(0, 8).map((item) => (
+                    <div key={item.sector}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, color: 'var(--text-2)', textTransform: 'capitalize' }}>{item.sector}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{formatPct(item.percentage)}</span>
+                      </div>
+                      <div style={{ height: 4, background: 'var(--bg-3)', borderRadius: 2 }}>
+                        <div style={{ height: '100%', width: `${Math.min(item.percentage, 100)}%`, background: RISK_COLORS[item.risk_level] || 'var(--blue)', borderRadius: 2 }} />
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{formatRWF(item.amount)} · PAR {formatPct(item.par_rate)}</div>
+                    </div>
+                  ))}
+                  {(!concentrations || concentrations.length === 0) && (
+                    <p style={{ fontSize: 13, color: 'var(--text-3)' }}>No data available</p>
+                  )}
                 </div>
-              )}
+              </div>
 
-              {/* Loan Officer Performance */}
+              {/* Loan Officer Performance — backend fields: loan_officer, total_loans, par_30_rate, portfolio_value */}
               <div className="card" style={{ padding: 20 }}>
                 <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <TrendingUp size={14} color="var(--green)" /> Loan Officer Performance
@@ -121,26 +119,37 @@ export default function AnalyticsPage() {
                     <thead>
                       <tr>
                         <th>Officer</th>
+                        <th>Branch</th>
                         <th>Loans</th>
                         <th>PAR 30</th>
                         <th>Portfolio</th>
+                        <th>Rating</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {(officers || []).slice(0, 10).map((o, i) => (
-                        <tr key={i}>
-                          <td style={{ fontSize: 12, fontWeight: 500 }}>{o.officer || o.name || `Officer ${i + 1}`}</td>
-                          <td style={{ fontSize: 12 }}>{o.total || o.loan_count || 0}</td>
-                          <td>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: (o.par30_rate || 0) > 10 ? '#ef4444' : (o.par30_rate || 0) > 5 ? '#f59e0b' : '#10b981' }}>
-                              {formatPct(o.par30_rate)}
-                            </span>
-                          </td>
-                          <td style={{ fontSize: 12 }}>{formatRWF(o.portfolio || o.total_portfolio)}</td>
-                        </tr>
-                      ))}
+                      {(officers || []).slice(0, 12).map((o, i) => {
+                        const perfColor = o.performance === 'excellent' ? '#10b981' : o.performance === 'good' ? '#3b82f6' : o.performance === 'warning' ? '#f59e0b' : '#ef4444'
+                        return (
+                          <tr key={i}>
+                            <td style={{ fontSize: 12, fontWeight: 500 }}>{o.loan_officer}</td>
+                            <td style={{ fontSize: 11, color: 'var(--text-3)' }}>{o.branch}</td>
+                            <td style={{ fontSize: 12 }}>{o.total_loans}</td>
+                            <td>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: o.par_30_rate > 10 ? '#ef4444' : o.par_30_rate > 5 ? '#f59e0b' : '#10b981' }}>
+                                {formatPct(o.par_30_rate)}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: 12 }}>{formatRWF(o.portfolio_value)}</td>
+                            <td>
+                              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 100, background: `${perfColor}18`, color: perfColor, fontWeight: 700, border: `1px solid ${perfColor}44` }}>
+                                {o.performance}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
                       {(!officers || officers.length === 0) && (
-                        <tr><td colSpan={4} style={{ textAlign: 'center', padding: 20, color: 'var(--text-3)' }}>No data</td></tr>
+                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: 20, color: 'var(--text-3)' }}>No data</td></tr>
                       )}
                     </tbody>
                   </table>

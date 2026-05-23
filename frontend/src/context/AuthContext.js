@@ -1,20 +1,46 @@
 'use client'
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
+import Cookies from 'js-cookie'
+import { api } from '@/lib/api'
 
 const AuthContext = createContext(null)
 
-const DEFAULT_USER = {
-  id: 'demo-001',
-  email: 'admin@abrwanda.rw',
-  full_name: 'Demo Admin',
-  role: 'risk_manager',
-}
-
 export function AuthProvider({ children }) {
-  const [user] = useState(DEFAULT_USER)
-  const logout = () => { window.location.href = '/dashboard' }
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = Cookies.get('token') || localStorage.getItem('token')
+    if (token) {
+      api.get('/api/auth/me')
+        .then(r => setUser(r.data))
+        .catch(() => {
+          Cookies.remove('token')
+          localStorage.removeItem('token')
+        })
+        .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
+    }
+  }, [])
+
+  const login = async (email, password) => {
+    const r = await api.post('/api/auth/login', { email, password })
+    const { access_token, user: u } = r.data
+    Cookies.set('token', access_token, { expires: 1 })
+    localStorage.setItem('token', access_token)
+    setUser(u)
+    return u
+  }
+
+  const logout = () => {
+    Cookies.remove('token')
+    localStorage.removeItem('token')
+    setUser(null)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading: false, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
